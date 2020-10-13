@@ -46,7 +46,6 @@
 }
 .admin-add {
   display: flex;
-  width: 80%;
   padding: 2% 0 0 25%;
 }
 .admin-detail{
@@ -57,8 +56,17 @@
 }
 .detail {
   display: flex;
+  margin-top: 10%;
 }
 .detail:hover {
   cursor: pointer;
 }
-
+.form-group {
+  display: flex;
+}
+.add-note {
+  margin-left: 45%;
+}
+.admin-add-detail {
+  display: flex;
+}
