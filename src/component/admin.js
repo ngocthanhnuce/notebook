@@ -3,103 +3,120 @@ import { v4 as uuidv4 } from 'uuid';
 import Fuse from 'fuse.js';
 
 const Admin = () => {
-    const [notes, setNotes] = useState();
+    const [notes, setNotes] = useState([]);
+    localStorage.getItem('dataNote', JSON.stringify(notes));
     const [listSearch, setListSearch] = useState([]);
     const [search, setSearch] = useState('');
     const [addNote, setAddNote] = useState('');
+
     const [addDetail, setAddDetail] = useState('');
     const [detail, setDetail] = useState();
-    const [isSearch,setIsSearch] = useState('')
+    const [arrSearch,setArrSearch] = useState('')
 
     const handleChange= (e) => {
-        setSearch(e)
+        setSearch(e);
         if(e === ''){
-            setNotes(listSearch)
-            setIsSearch('')
+            setArrSearch('');
+            setNotes(listSearch);
         }
     }
+    //Add notes
     const handleAdd = (e) => {
         e.preventDefault();
         if (addNote) {
-           listSearch.push({ id: uuidv4(), title: addNote, note: [] });        
-            setNotes(listSearch)
+            listSearch.push({ id: uuidv4(), title: addNote, note: [] });        
+            setNotes(listSearch);
             setAddNote('');         
         }
     }
+    //Show detail
     const onDetail = (detail) => {
-        setDetail([detail])
-        localStorage.setItem('id', detail.id)
+        setDetail([detail]);
     }
-    
-    const handleAddDetail = (e) => {
+    //Add detail
+    const handleAddDetail = (arr) => {
         if (addDetail) {
-            e.push({ id: uuidv4(), titleDetail: addDetail, arrDetail: [] });
-            setAddDetail('')
+            arr.push({ id: uuidv4(), titleDetail: addDetail, arrDetail: [] });
+            setAddDetail('');
         }
     }
+    //Delete note
     const handleDelete = (idDelete) => {
-        const arrDelete = notes.filter(item => item.id !== idDelete)
+        const arrDelete = notes.filter(item => item.id !== idDelete);
         setNotes(arrDelete);
 
-        setListSearch(listSearch.filter(item => item.id !== idDelete))   
-        setDetail('')
+        setListSearch(listSearch.filter(item => item.id !== idDelete)) ;  
+        setDetail('');
     }
     const handleSearch = (e) => {
-        e.preventDefault();
-        setIsSearch(true)
+        setArrSearch(true);
         if (search !== '' && listSearch !== '') {
-            setIsSearch(true)
+            setArrSearch(true);
             const options = {
                 includeScore: true,
                 keys: ['title']
             }
-            const fuse = new Fuse(listSearch, options)
-            const result = fuse.search(search);
+            const fuse = new Fuse(listSearch, options);
+            const results = fuse.search(search);
             const listResult = [];
-            listResult.push(result.map(el => el.item));
+            listResult.push(results.map(el => el.item));
             setNotes(listResult[0]);
         }
         else {
             setNotes(listSearch);
-            setIsSearch('')
+            setArrSearch('');
         }
+        e.preventDefault();
     }
 
+    // Sort by Name
+    const sortName = () =>{
+        // eslint-disable-next-line array-callback-return
+        let sortName = notes.sort((a, b) => {
+        if(a.title>b.title){
+            return 1;
+        }
+        else if(a.title<b.title){
+            return -1;
+        }
+        });
+        setNotes([...sortName]);
+    }
+    //Delete detail
     const deleteDetail = (listDetail, itemId) => {
-        const lists = [...notes]
-        const noteList = detail.map(list => list.note);
+        const lists = [...notes];
+        const noteList = detail.map(list => list.note);        
         const detailNote = noteList[0].filter(idx => idx.id !== listDetail.id);
-        const arrSearch = [...listSearch];
-        const arrDetailNote = noteList[0].filter(idx => idx.id !== listDetail.id);
-
         const arrDelete = lists.map(arrNote => {
 
             if (arrNote.id === itemId) {
                 return { ...arrNote, note: detailNote }
             }
             return arrNote;
-        })
-        const newListSearch = arrSearch.map(arrNote => {
+        });
+    const arrSearch = [...listSearch];
+        const arrDetailNote = noteList[0].filter(idx => idx.id !== listDetail.id);
+        const newArrSearch = arrSearch.map(arrNote => {
 
             if (arrNote.id === itemId) {
                 return { ...arrNote, note: arrDetailNote }
             }
             return arrNote;
-        })
-        const newDetail = detail.map(el => {
-            if (el.id === itemId) {
-                return { ...el, note: detailNote }
+        });
+        const newDetail = detail.map(listItem => {
+            if (listItem.id === itemId) {
+                return { ...listItem, note: detailNote }
             }
-            return el;
-        })
+            return listItem;
+        });
         setDetail(newDetail);
-        setNotes(arrDelete)
-        setListSearch(newListSearch)
-
+        setNotes(arrDelete);
+        setListSearch(newArrSearch);
     }
 
     return (
         <div className="admin">
+            <h1>NoteBook</h1>
             <div className="row">
                 <div className="col-6">
                     <h3>All Note</h3>
@@ -113,16 +130,18 @@ const Admin = () => {
                     </div>
                     <div className="admin-add">
                         <form className = "form-group">
-                            <input type="text" className="form-control" value = {addNote} onChange = {e => setAddNote(e.target.value)} placeholder="Add item..." />                
-                            { isSearch ? <button type="button" style = {{display: "flex"}} disabled>Add Note</button> :  <button className="btn btn-primary" style = {{display: "flex"}} onClick = {handleAdd}>Add<i className="fas fa-address-card" style = {{paddingTop: "6%"}}></i></button>}
+                            <input type="text" className="form-control" value = {addNote} onChange = {e => setAddNote(e.target.value)} placeholder="Add note..." />                
+                            { arrSearch ? <button className="btn btn-primary arr-note" type="button">Add<i className="fas fa-address-card mt icon"></i></button> : 
+                            <button className="btn btn-primary arr-note" style = {{display: "flex"}} onClick = {handleAdd}>Add<i className="fas fa-address-card mt" style = {{paddingTop: "6%"}}></i></button>}
                         </form>
+                        <button className = "btn btn-primary sort" onClick={ sortName } style = {{width: "20%", marginLeft: "15%", height: "1%"}}>Sort by name<i className="fas fa-file-signature mt"></i></button>
                     </div>
                     <div className = "col-6">
-                        {notes ? notes.map((item, index) => (
+                        { notes ? notes.map((item, index) => (
                             <div key={index} className="col-12 add-note">
                                 <div className="detail">
-                                    <button style = {{marginLeft: "" ,width: "800%"}} className = "btn btn-primary" type = "button" onClick = {() => onDetail(item)}>{item.title}</button>                                  
-                                    <button type="button" onClick={() => handleDelete(item.id)} className="delete"><i className="fas fa-trash-alt"></i></button>
+                                    <button className = "btn btn-primary notes" type = "button" onClick = {() => onDetail(item)}>{item.title}</button>                                  
+                                    <button type="button" onClick={ () => handleDelete(item.id)} className="delete"><i className="fas fa-trash-alt"></i></button>
                                 </div>      
                             </div>
                         )) : ('')}
@@ -130,28 +149,26 @@ const Admin = () => {
                 </div>
                 <div className="col-6">
                     <h3>My Note</h3>
-                    {detail ? detail.map((items, index) => (
-                        <div key={index}>
+                    { detail ? detail.map((items, index) => (
+                        <div key={index} className = "item-detail">
                             <div className="d-flex detail">
                                 <div className="admin-add-detail">
-                                    <input type="text" className="form-control" value = {addDetail} onChange = {e => setAddDetail(e.target.value)} placeholder="Add item..." />
-                                    <button className="btn btn-primary" style = {{display: "flex", width: "60%"}} onClick = { () => handleAddDetail(items.note)}>Add Detail<i className="fas fa-address-card" style = {{paddingTop: "6%"}}></i></button>
+                                    <input type="text" className="form-control" value = {addDetail} onChange = { e => setAddDetail(e.target.value)} placeholder="Add detail..." />
+                                    <button className="btn btn-primary" style = {{display: "flex", width: "60%"}} onClick = { () => handleAddDetail(items.note)}>Add Detail<i className="fas fa-address-card mt icon" ></i></button>
                                 </div>
                             </div>
                             <div className="list-detail">
-                                {items.note ? items.note.map((detail, index) => (
-                                    <div key={index} className="admin-detail">
-                                        <div className="d-flex">
-                                            <div className="col-10 detail">
-                                                {detail.titleDetail}
-                                            </div>
-                                            <div className="col-2 " style = {{marginTop: "1%"}}><button type="button" onClick={() => deleteDetail(detail, items.id)} className="ml-3 pt-4 btn-close"><i className="fas fa-trash-alt"></i></button></div>                             
+                                { items.note ? items.note.map((detail, index) => (
+                                    <div key={index} className="admin-detail-mt">
+                                        <div className="add-note-mt">
+                                            <button className = "btn btn-primary m-10" type = "button"> {detail.titleDetail}</button>                                  
+                                            <button type="button" onClick={ () => deleteDetail(detail, items.id)} className="delete"><i className="fas fa-trash-alt"></i></button>                 
                                         </div>
                                     </div>
                                 )) : ('')}
                             </div>
                         </div>
-                    )) : ""}
+                    )) : ('')}
                 </div>
             </div>
         </div>
